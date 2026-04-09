@@ -1,0 +1,7 @@
+# Compiled test binaries
+/tmp/
+test_p*
+tests/test_p[0-9]*
+!tests/test_p*.c
+*.o
+*.out
