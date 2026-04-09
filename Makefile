@@ -17,7 +17,10 @@ BTC_CORE_SRCS := \
     core/btc_indicators.c  \
     core/btc_cycle.c       \
     core/btc_pattern.c     \
-    core/btc_signal.c
+    core/btc_signal.c      \
+    core/btc_multiverse.c  \
+    core/btc_branch.c      \
+    core/btc_timewarp.c
 
 # ── Phase 단위 테스트 ──────────────────────────────
 test-p0: tests/test_p0_types.c core/btc_types.h
@@ -59,6 +62,13 @@ test-p7: tests/test_p7_signal.c core/btc_signal.c core/btc_indicators.c \
 	    $(CANVAS_AI_SRCS) -o /tmp/test_p7
 	/tmp/test_p7
 
+test-p8: tests/test_p8_multiverse.c core/btc_multiverse.c core/btc_branch.c \
+         core/btc_timewarp.c core/btc_canvas_brain.c core/btc_encoding.c $(CANVAS_AI_SRCS)
+	$(CC) $(CFLAGS) tests/test_p8_multiverse.c core/btc_multiverse.c \
+	    core/btc_branch.c core/btc_timewarp.c core/btc_canvas_brain.c \
+	    core/btc_encoding.c $(CANVAS_AI_SRCS) -o /tmp/test_p8
+	/tmp/test_p8
+
 # ── DK-1 float/double 검사 ─────────────────────────
 dk1-check:
 	@echo "=== DK-1: float/double 검사 ==="
@@ -79,8 +89,8 @@ bench: tests/bench_all.c $(BTC_CORE_SRCS) $(CANVAS_AI_SRCS)
 	/tmp/bench_all
 
 # ── 전체 테스트 ───────────────────────────────────
-test-all: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7
+test-all: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7 test-p8
 	@echo "=== 전체 테스트 완료 ==="
 
-.PHONY: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7 \
+.PHONY: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7 test-p8 \
         dk1-check bench test-all
