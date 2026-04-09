@@ -72,9 +72,15 @@ dk1-check:
 	    echo "[PASS] float/double 0건"; \
 	fi
 
+# ── 벤치마크 ─────────────────────────────────────
+bench: tests/bench_all.c $(BTC_CORE_SRCS) $(CANVAS_AI_SRCS)
+	$(CC) $(CFLAGS) tests/bench_all.c $(BTC_CORE_SRCS) $(CANVAS_AI_SRCS) \
+	    -o /tmp/bench_all
+	/tmp/bench_all
+
 # ── 전체 테스트 ───────────────────────────────────
 test-all: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7
 	@echo "=== 전체 테스트 완료 ==="
 
 .PHONY: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7 \
-        dk1-check test-all
+        dk1-check bench test-all
