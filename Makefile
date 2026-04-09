@@ -63,7 +63,10 @@ test-p7: tests/test_p7_signal.c core/btc_signal.c core/btc_indicators.c \
 dk1-check:
 	@echo "=== DK-1: float/double 검사 ==="
 	@if grep -rn '\bfloat\b\|\bdouble\b' core/*.c core/*.h 2>/dev/null \
-	   | grep -v '//.*float\|//.*double'; then \
+	   | grep -v '//.*float\|//.*double' \
+	   | grep -v '\*.*DK-1.*float' \
+	   | grep -v '\*.*float/double.*0건' \
+	   | grep -v '\*.*DK-2.*float'; then \
 	    echo "[FAIL] float/double 발견!"; exit 1; \
 	else \
 	    echo "[PASS] float/double 0건"; \
