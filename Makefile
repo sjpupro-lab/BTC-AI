@@ -92,5 +92,74 @@ bench: tests/bench_all.c $(BTC_CORE_SRCS) $(CANVAS_AI_SRCS)
 test-all: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7 test-p8
 	@echo "=== 전체 테스트 완료 ==="
 
+# ══════════════════════════════════════════════════
+# ── Binance 실시간 전체 앙상블 ────────────────────
+# ══════════════════════════════════════════════════
+#
+# 의존 라이브러리: libcurl, json-c, pthread
+#   Ubuntu/Debian:  sudo apt-get install libcurl4-openssl-dev libjson-c-dev
+#   Arch:           sudo pacman -S curl json-c
+#
+# DK-1/DK-2 준수: float/double 0건 (Q16.16 정수 전용)
+
+ENSEMBLE_SRCS := \
+    btc_binance_realtime.c \
+    btc_full_ensemble.c    \
+    $(BTC_CORE_SRCS)       \
+    $(CANVAS_AI_SRCS)
+
+# -std=gnu11: mkdir(), mktime() 등 POSIX 함수를 위해 c11 대신 gnu11 사용
+# -I.:        프로젝트 루트 헤더 (btc_binance_realtime.h, btc_full_ensemble.h)
+REALTIME_CFLAGS := -std=gnu11 -Wall -Wextra -O2 \
+                   -I. -I./core -I./core/canvas_ai
+REALTIME_LIBS   := -lcurl -ljson-c -pthread
+
+# ── BTC-AI 단독 빌드 (SJ-CANVAOS 없이) ───────────
+btc_full_realtime: main_realtime_full.c $(ENSEMBLE_SRCS)
+	$(CC) $(REALTIME_CFLAGS) \
+	    main_realtime_full.c $(ENSEMBLE_SRCS) \
+	    -o btc_full_realtime \
+	    $(REALTIME_LIBS)
+	@echo "✅ btc_full_realtime 빌드 완료"
+
+# ── SJ-CANVAOS 통합 빌드 ─────────────────────────
+# 선행 조건: make init-submodule (git submodule update --init --recursive)
+CANVAOS_SRCS := $(shell find sj-canvaos/src -name "*.c" 2>/dev/null)
+
+btc_full_realtime_canvaos: main_realtime_full.c $(ENSEMBLE_SRCS)
+	@if [ ! -f sj-canvaos/include/bt_canvas.h ]; then \
+	    echo "[ERROR] sj-canvaos 서브모듈 미초기화. 'make init-submodule' 먼저 실행"; \
+	    exit 1; \
+	fi
+	$(CC) $(REALTIME_CFLAGS) \
+	    -Isj-canvaos/include \
+	    -DBTC_CANVAOS_ENABLED \
+	    main_realtime_full.c $(ENSEMBLE_SRCS) $(CANVAOS_SRCS) \
+	    -o btc_full_realtime_canvaos \
+	    $(REALTIME_LIBS)
+	@echo "✅ btc_full_realtime_canvaos (SJ-CANVAOS 통합) 빌드 완료"
+
+# ── 서브모듈 초기화 안내 ──────────────────────────
+init-submodule:
+	git submodule update --init --recursive
+	@echo "✅ SJ-CANVAOS 서브모듈 초기화 완료"
+	@echo "   이제 'make btc_full_realtime_canvaos' 실행 가능"
+
+# ── DK-1/DK-2 루트 파일 포함 전체 검사 ──────────
+dk1-check-all: dk1-check
+	@echo "=== DK-1 루트 파일 검사 (btc_binance_realtime / btc_full_ensemble / main) ==="
+	@if grep -n '\bfloat\b\|\bdouble\b' \
+	   btc_binance_realtime.c btc_binance_realtime.h \
+	   btc_full_ensemble.c btc_full_ensemble.h \
+	   main_realtime_full.c 2>/dev/null \
+	   | grep -v '//.*float\|//.*double' \
+	   | grep -v '\* .*float\|Q16\.16.*float'; then \
+	    echo "[FAIL] float/double 발견!"; exit 1; \
+	else \
+	    echo "[PASS] 루트 앙상블 파일 float/double 0건"; \
+	fi
+
 .PHONY: test-p0 test-p1 test-p2 test-p3 test-p4 test-p5 test-p6 test-p7 test-p8 \
-        dk1-check bench test-all
+        dk1-check bench test-all \
+        btc_full_realtime btc_full_realtime_canvaos \
+        init-submodule dk1-check-all

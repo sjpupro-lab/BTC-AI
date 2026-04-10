@@ -1,0 +1,3 @@
+[submodule "sj-canvaos"]
+    path = sj-canvaos
+    url = https://github.com/sjpupro-lab/SJ-CANVAOS.git
