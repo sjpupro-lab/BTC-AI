@@ -176,8 +176,9 @@ void btc_realtime_init(RealtimeTfBuffer buffers[REALTIME_TF_COUNT])
     for (int i = 0; i < REALTIME_TF_COUNT; i++) {
         memset(&buffers[i], 0, sizeof(RealtimeTfBuffer));
         buffers[i].tf = TFS[i];
-        strncpy(buffers[i].binance_interval, INTERVALS[i], 7u);
-        buffers[i].binance_interval[7] = '\0';
+        strncpy(buffers[i].binance_interval, INTERVALS[i],
+                sizeof(buffers[i].binance_interval) - 1u);
+        buffers[i].binance_interval[sizeof(buffers[i].binance_interval) - 1u] = '\0';
     }
 
     curl_global_init(CURL_GLOBAL_DEFAULT);

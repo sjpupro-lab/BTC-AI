@@ -128,8 +128,10 @@ FullEnsembleResult btc_full_ensemble_predict(
     /* ── 2. 증분 학습 (새 캔들만) ── */
     uint32_t train_start = 1u;
     if (g_tf_last_ts[tf] != 0u) {
-        /* 뒤에서 순방향 탐색: 마지막 학습 이후 캔들 찾기 */
-        for (uint32_t i = count; i-- > 1u; ) {
+        /* 역방향 탐색: 마지막 학습 이후 새 캔들의 시작 인덱스 찾기.
+         * uint32_t 언더플로 방지를 위해 후위 감소(i--)를 조건에서 사용. */
+        uint32_t i = count;
+        while (i-- > 1u) {
             if (candles[i - 1u].timestamp <= g_tf_last_ts[tf]) {
                 train_start = i;
                 break;
@@ -190,11 +192,11 @@ FullEnsembleResult btc_full_ensemble_predict(
         uint32_t p_diff = (p_up > p_down) ? (p_up - p_down)
                                            : (p_down - p_up);
 
-        /* Q16.16 → 0~20 점수 (정수 나눗셈, DK-2) */
-        sj_score    = (int32_t)(p_diff * 20u / 65536u);
+        /* Q16.16 → 0~20 점수 (>> 16 = ÷65536, 2의 거듭제곱 최적화) */
+        sj_score    = (int32_t)((p_diff * 20u) >> 16);
         sj_dir      = (p_up > p_down) ? 1 : (p_down > p_up) ? -1 : 0;
         /* Q16.16 → 0~200 신뢰도 기여 */
-        sj_conf_add = p_diff * 200u / 65536u;
+        sj_conf_add = (p_diff * 200u) >> 16;
     }
 #else
     int32_t sj_score = 0;
